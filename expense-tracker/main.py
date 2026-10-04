@@ -1,10 +1,19 @@
+import json
+import os
+
 print("===== EXPENSE TRACKER =====")
 
 name = input("Enter your name: ")
 
 print("Welcome,", name)
 
-expenses = []
+if os.path.exists("expense-tracker/expenses.json"):
+    with open("expense-tracker/expenses.json", "r") as file:
+        expenses = json.load(file)
+else:
+    expenses = []
+
+
 
 while True:
     amount = float(input("Enter the expense amount: "))
@@ -39,3 +48,5 @@ for expense in expenses:
     total = total + expense[0]
 
 print(f"\nTotal spending: ₹{total:.2f}")
+with open("expense-tracker/expenses.json", "w") as file:
+    json.dump(expenses, file, indent=4)
