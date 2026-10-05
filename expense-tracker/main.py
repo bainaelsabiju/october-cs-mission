@@ -24,6 +24,8 @@ while True:
         print("Valid amount!")
 
         category = input("Enter the category: ")
+        date = input("Enter the expense date (YYYY-MM-DD): ")
+
 
         expenses.append([amount, category])
 
@@ -40,13 +42,31 @@ for index, expense in enumerate(expenses, start=1):
     amount = expense[0]
     category = expense[1]
 
-    print(f"{index}. {category} - ₹{amount:.2f}")
-
+    if len(expense) >= 3:
+        date = expense[2]
+        print(f"{index}. {category} - ₹{amount:.2f} - {date}")
+    else:
+        print(f"{index}. {category} - ₹{amount:.2f}")
 total = 0
 
 for expense in expenses:
     total = total + expense[0]
 
 print(f"\nTotal spending: ₹{total:.2f}")
+category = input("\nEnter a category to filter: ")
+
+print(f"\n===== {category.upper()} EXPENSES =====")
+
+date_filter = input("\nEnter a date to filter (YYYY-MM-DD): ")
+
+print(f"\n===== EXPENSES ON {date_filter} =====")
+
+for expense in expenses:
+    if len(expense) >= 3 and expense[2] == date_filter:
+        print(f"{expense[1]} - ₹{expense[0]:.2f}")
+
+for expense in expenses:
+    if expense[1].lower() == category.lower():
+        print(f"{expense[1]} - ₹{expense[0]:.2f}")
 with open("expense-tracker/expenses.json", "w") as file:
     json.dump(expenses, file, indent=4)
