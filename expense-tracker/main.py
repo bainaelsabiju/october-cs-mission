@@ -1,35 +1,111 @@
 import json
 import os
 
+
+# Calculate total spending
+def calculate_total(expenses):
+    total = 0
+
+    for expense in expenses:
+        total += expense[0]
+
+    return total
+
+
+# Calculate spending by category
+def calculate_category_totals(expenses):
+    category_totals = {}
+
+    for expense in expenses:
+        category = expense[1]
+        amount = expense[0]
+
+        if category in category_totals:
+            category_totals[category] += amount
+        else:
+            category_totals[category] = amount
+
+    return category_totals
+
+
+# Filter expenses by category
+def filter_by_category(expenses, category):
+    matching_expenses = []
+
+    for expense in expenses:
+        if expense[1].lower() == category.lower():
+            matching_expenses.append(expense)
+
+    return matching_expenses
+
+
+# Filter expenses by date
+def filter_by_date(expenses, date):
+    matching_expenses = []
+
+    for expense in expenses:
+        if len(expense) >= 3 and expense[2] == date:
+            matching_expenses.append(expense)
+
+    return matching_expenses
+
+
+# Save expenses
+def save_expenses(expenses):
+    with open("expense-tracker/expenses.json", "w") as file:
+        json.dump(expenses, file, indent=4)
+
+
+# Load expenses
+def load_expenses():
+    if os.path.exists("expense-tracker/expenses.json"):
+        with open("expense-tracker/expenses.json", "r") as file:
+            return json.load(file)
+    else:
+        return []
+
+
 print("===== EXPENSE TRACKER =====")
 
 name = input("Enter your name: ")
 
 print("Welcome,", name)
 
+
 # Load existing expenses
-if os.path.exists("expense-tracker/expenses.json"):
-    with open("expense-tracker/expenses.json", "r") as file:
-        expenses = json.load(file)
-else:
-    expenses = []
+expenses = load_expenses()
 
-
-# Add expenses
-while True:
+def add_expense(expenses):
     amount = float(input("Enter the expense amount: "))
 
     if amount <= 0:
         print("Invalid amount!")
-        continue
+        return
 
     print("Valid amount!")
 
     category = input("Enter the category: ")
     date = input("Enter the expense date (YYYY-MM-DD): ")
 
-    # Save amount, category and date
     expenses.append([amount, category, date])
+
+    print("Expense Added!")
+
+
+# Add expenses
+while True:
+    add_expense(expenses)
+
+    choice = input("Do you want to add another expense? (yes/no): ")
+
+    if choice.lower() == "no":
+        break
+
+    category = input("Enter the category: ")
+
+    date = input("Enter the expense date (YYYY-MM-DD): ")
+
+    
 
     print("Expense Added!")
 
@@ -43,6 +119,7 @@ while True:
 print("\n===== YOUR EXPENSES =====")
 
 for index, expense in enumerate(expenses, start=1):
+
     amount = expense[0]
     category = expense[1]
 
@@ -54,26 +131,13 @@ for index, expense in enumerate(expenses, start=1):
 
 
 # Calculate total spending
-total = 0
-
-for expense in expenses:
-    total = total + expense[0]
+total = calculate_total(expenses)
 
 print(f"\nTotal spending: ₹{total:.2f}")
 
 
 # Calculate spending by category
-category_totals = {}
-
-for expense in expenses:
-    category = expense[1]
-    amount = expense[0]
-
-    if category in category_totals:
-        category_totals[category] += amount
-    else:
-        category_totals[category] = amount
-
+category_totals = calculate_category_totals(expenses)
 
 print("\n===== CATEGORY TOTALS =====")
 
@@ -86,9 +150,10 @@ category = input("\nEnter a category to filter: ")
 
 print(f"\n===== {category.upper()} EXPENSES =====")
 
-for expense in expenses:
-    if expense[1].lower() == category.lower():
-        print(f"{expense[1]} - ₹{expense[0]:.2f}")
+matching_expenses = filter_by_category(expenses, category)
+
+for expense in matching_expenses:
+    print(f"{expense[1]} - ₹{expense[0]:.2f}")
 
 
 # Filter expenses by date
@@ -96,11 +161,11 @@ date_filter = input("\nEnter a date to filter (YYYY-MM-DD): ")
 
 print(f"\n===== EXPENSES ON {date_filter} =====")
 
-for expense in expenses:
-    if len(expense) >= 3 and expense[2] == date_filter:
-        print(f"{expense[1]} - ₹{expense[0]:.2f}")
+matching_expenses = filter_by_date(expenses, date_filter)
+
+for expense in matching_expenses:
+    print(f"{expense[1]} - ₹{expense[0]:.2f}")
 
 
 # Save expenses
-with open("expense-tracker/expenses.json", "w") as file:
-    json.dump(expenses, file, indent=4)
+save_expenses(expenses)
