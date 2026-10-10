@@ -1,5 +1,11 @@
 import json
 import os
+import math
+
+
+# File paths
+FILE_PATH = "expense-tracker/expenses.json"
+TEMP_PATH = "expense-tracker/expenses.tmp"
 
 
 # Calculate total spending
@@ -50,41 +56,98 @@ def filter_by_date(expenses, date):
     return matching_expenses
 
 
-# Save expenses
+# Validate loaded expense records
+def validate_expenses(data):
+    if not isinstance(data, list):
+        raise ValueError("Expense data must be a list.")
+
+    for index, expense in enumerate(data, start=1):
+        if (
+            not isinstance(expense, list)
+            or len(expense) < 2
+            or len(expense) > 3
+        ):
+            raise ValueError(
+                f"Invalid expense record at entry {index}."
+            )
+
+        amount = expense[0]
+        category = expense[1]
+
+        if (
+            isinstance(amount, bool)
+            or not isinstance(amount, (int, float))
+            or not math.isfinite(amount)
+            or amount <= 0
+ ):
+            raise ValueError(f"Invalid amount at expense entry {index}.")
+
+        if not isinstance(category, str) or not category.strip():
+            raise ValueError(
+                f"Invalid category at expense entry {index}."
+            )
+
+        if len(expense) == 3:
+            if not isinstance(expense[2], str) or not expense[2].strip():
+                raise ValueError(
+                    f"Invalid date at expense entry {index}."
+                )
+
+    return data
+
+
+# Save expenses safely
 def save_expenses(expenses):
     try:
-        with open("expense-tracker/expenses.json", "w") as file:
+        # Write to a temporary file first
+        with open(TEMP_PATH, "w", encoding="utf-8") as file:
             json.dump(expenses, file, indent=4)
+            file.flush()
+            os.fsync(file.fileno())
+
+        # Replace the original only after writing succeeds
+        os.replace(TEMP_PATH, FILE_PATH)
 
         print("\nExpenses saved successfully!")
 
-    except OSError:
-        print("\nError: Could not save expenses.")
+    except (OSError, TypeError, ValueError) as error:
+        print("\nERROR: Could not save expenses.")
+        print("Details:", error)
+
+        # Attempt to remove the temporary file
+        try:
+            if os.path.exists(TEMP_PATH):
+                os.remove(TEMP_PATH)
+        except OSError:
+            print("Warning: Could not remove the temporary file.")
 
 
-# Load expenses
+# Load existing expenses safely
 def load_expenses():
-    file_path = "expense-tracker/expenses.json"
-
-    if not os.path.exists(file_path):
+    if not os.path.exists(FILE_PATH):
+        print("No existing expense file found. Starting with an empty list.")
         return []
 
     try:
-        with open(file_path, "r") as file:
+        with open(FILE_PATH, "r", encoding="utf-8") as file:
             data = json.load(file)
 
-        if not isinstance(data, list):
-            raise ValueError("Expense data must be a list.")
-
-        return data
+        return validate_expenses(data)
 
     except json.JSONDecodeError:
-        print("ERROR: The expense file contains invalid JSON.")
-        print("Please check or restore the file before continuing.")
+        print("\nERROR: The expense file contains invalid JSON.")
+        print("Your existing file has not been overwritten.")
         raise
 
-    except OSError:
-        print("ERROR: Could not read the expense file.")
+    except ValueError as error:
+        print("\nERROR: The expense file contains invalid records.")
+        print("Details:", error)
+        print("Your existing file has not been overwritten.")
+        raise
+
+    except OSError as error:
+        print("\nERROR: Could not read the expense file.")
+        print("Details:", error)
         raise
 
 
@@ -93,8 +156,8 @@ def add_expense(expenses):
     try:
         amount = float(input("Enter the expense amount: "))
 
-        if amount <= 0:
-            print("Amount must be greater than 0!")
+        if not math.isfinite(amount) or amount <= 0:
+            print("Amount must be a valid number greater than 0!")
             return
 
         category = input("Enter the category: ").strip()
@@ -105,7 +168,6 @@ def add_expense(expenses):
             return
 
         expenses.append([amount, category, date])
-
         print("Expense Added!")
 
     except ValueError:
@@ -116,87 +178,86 @@ def add_expense(expenses):
 
 
 # Main program
-print("===== EXPENSE TRACKER =====")
+def main():
+    print("===== EXPENSE TRACKER =====")
 
-name = input("Enter your name: ").strip()
+    name = input("Enter your name: ").strip()
+    print("Welcome,", name)
 
-print("Welcome,", name)
+    # Load existing data before allowing changes
+    try:
+        expenses = load_expenses()
+    except (OSError, ValueError):
+        print("\nProgram stopped to protect your existing expense data.")
+        return
 
+    # Add expenses
+    while True:
+        add_expense(expenses)
 
-# Load existing expenses
-expenses = load_expenses()
+        choice = input(
+            "Do you want to add another expense? (yes/no): "
+        ).strip().lower()
 
+        if choice != "yes":
+            break
 
-# Add expenses
-while True:
-    add_expense(expenses)
+    # Display all expenses
+    print("\n===== YOUR EXPENSES =====")
 
-    choice = input(
-        "Do you want to add another expense? (yes/no): "
-    ).strip().lower()
+    for index, expense in enumerate(expenses, start=1):
+        amount = expense[0]
+        category = expense[1]
 
-    if choice != "yes":
-        break
+        if len(expense) >= 3:
+            date = expense[2]
+            print(f"{index}. {category} - ₹{amount:.2f} - {date}")
+        else:
+            print(f"{index}. {category} - ₹{amount:.2f}")
 
+    # Calculate total spending
+    total = calculate_total(expenses)
+    print(f"\nTotal spending: ₹{total:.2f}")
 
-# Display all expenses
-print("\n===== YOUR EXPENSES =====")
+    # Calculate spending by category
+    category_totals = calculate_category_totals(expenses)
 
-for index, expense in enumerate(expenses, start=1):
-    amount = expense[0]
-    category = expense[1]
+    print("\n===== CATEGORY TOTALS =====")
 
-    if len(expense) >= 3:
-        date = expense[2]
-        print(f"{index}. {category} - ₹{amount:.2f} - {date}")
+    for category, amount in category_totals.items():
+        print(f"{category}: ₹{amount:.2f}")
+
+    # Filter by category
+    category = input("\nEnter a category to filter: ").strip()
+
+    print(f"\n===== {category.upper()} EXPENSES =====")
+
+    matching_expenses = filter_by_category(expenses, category)
+
+    if matching_expenses:
+        for expense in matching_expenses:
+            print(f"{expense[1]} - ₹{expense[0]:.2f}")
     else:
-        print(f"{index}. {category} - ₹{amount:.2f}")
+        print("No expenses found for this category.")
+
+    # Filter by date
+    date_filter = input(
+        "\nEnter a date to filter (YYYY-MM-DD): "
+    ).strip()
+
+    print(f"\n===== EXPENSES ON {date_filter} =====")
+
+    matching_expenses = filter_by_date(expenses, date_filter)
+
+    if matching_expenses:
+        for expense in matching_expenses:
+            print(f"{expense[1]} - ₹{expense[0]:.2f}")
+    else:
+        print("No expenses found for this date.")
+
+    # Save expenses
+    save_expenses(expenses)
 
 
-# Calculate total spending
-total = calculate_total(expenses)
-
-print(f"\nTotal spending: ₹{total:.2f}")
-
-
-# Calculate spending by category
-category_totals = calculate_category_totals(expenses)
-
-print("\n===== CATEGORY TOTALS =====")
-
-for category, total in category_totals.items():
-    print(f"{category}: ₹{total:.2f}")
-
-
-# Filter expenses by category
-category = input("\nEnter a category to filter: ").strip()
-
-print(f"\n===== {category.upper()} EXPENSES =====")
-
-matching_expenses = filter_by_category(expenses, category)
-
-if matching_expenses:
-    for expense in matching_expenses:
-        print(f"{expense[1]} - ₹{expense[0]:.2f}")
-else:
-    print("No expenses found for this category.")
-
-
-# Filter expenses by date
-date_filter = input(
-    "\nEnter a date to filter (YYYY-MM-DD): "
-).strip()
-
-print(f"\n===== EXPENSES ON {date_filter} =====")
-
-matching_expenses = filter_by_date(expenses, date_filter)
-
-if matching_expenses:
-    for expense in matching_expenses:
-        print(f"{expense[1]} - ₹{expense[0]:.2f}")
-else:
-    print("No expenses found for this date.")
-
-
-# Save expenses
-save_expenses(expenses)
+if __name__ == "__main__":
+    main()
