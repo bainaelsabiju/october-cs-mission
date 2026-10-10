@@ -33,7 +33,7 @@ def filter_by_category(expenses, category):
     matching_expenses = []
 
     for expense in expenses:
-        if expense[1].lower() == category.lower():
+        if expense[1].strip().lower() == category.strip().lower():
             matching_expenses.append(expense)
 
     return matching_expenses
@@ -44,7 +44,7 @@ def filter_by_date(expenses, date):
     matching_expenses = []
 
     for expense in expenses:
-        if len(expense) >= 3 and expense[2] == date:
+        if len(expense) >= 3 and expense[2].strip() == date.strip():
             matching_expenses.append(expense)
 
     return matching_expenses
@@ -52,22 +52,73 @@ def filter_by_date(expenses, date):
 
 # Save expenses
 def save_expenses(expenses):
-    with open("expense-tracker/expenses.json", "w") as file:
-        json.dump(expenses, file, indent=4)
+    try:
+        with open("expense-tracker/expenses.json", "w") as file:
+            json.dump(expenses, file, indent=4)
+
+        print("\nExpenses saved successfully!")
+
+    except OSError:
+        print("\nError: Could not save expenses.")
 
 
 # Load expenses
 def load_expenses():
-    if os.path.exists("expense-tracker/expenses.json"):
-        with open("expense-tracker/expenses.json", "r") as file:
-            return json.load(file)
-    else:
+    file_path = "expense-tracker/expenses.json"
+
+    if not os.path.exists(file_path):
         return []
 
+    try:
+        with open(file_path, "r") as file:
+            data = json.load(file)
 
+        if not isinstance(data, list):
+            raise ValueError("Expense data must be a list.")
+
+        return data
+
+    except json.JSONDecodeError:
+        print("ERROR: The expense file contains invalid JSON.")
+        print("Please check or restore the file before continuing.")
+        raise
+
+    except OSError:
+        print("ERROR: Could not read the expense file.")
+        raise
+
+
+# Add an expense
+def add_expense(expenses):
+    try:
+        amount = float(input("Enter the expense amount: "))
+
+        if amount <= 0:
+            print("Amount must be greater than 0!")
+            return
+
+        category = input("Enter the category: ").strip()
+        date = input("Enter the expense date (YYYY-MM-DD): ").strip()
+
+        if not category or not date:
+            print("Category and date cannot be empty!")
+            return
+
+        expenses.append([amount, category, date])
+
+        print("Expense Added!")
+
+    except ValueError:
+        print("Please enter a valid number!")
+
+    finally:
+        print("Input process finished.")
+
+
+# Main program
 print("===== EXPENSE TRACKER =====")
 
-name = input("Enter your name: ")
+name = input("Enter your name: ").strip()
 
 print("Welcome,", name)
 
@@ -75,43 +126,16 @@ print("Welcome,", name)
 # Load existing expenses
 expenses = load_expenses()
 
-def add_expense(expenses):
-    amount = float(input("Enter the expense amount: "))
-
-    if amount <= 0:
-        print("Invalid amount!")
-        return
-
-    print("Valid amount!")
-
-    category = input("Enter the category: ")
-    date = input("Enter the expense date (YYYY-MM-DD): ")
-
-    expenses.append([amount, category, date])
-
-    print("Expense Added!")
-
 
 # Add expenses
 while True:
     add_expense(expenses)
 
-    choice = input("Do you want to add another expense? (yes/no): ")
+    choice = input(
+        "Do you want to add another expense? (yes/no): "
+    ).strip().lower()
 
-    if choice.lower() == "no":
-        break
-
-    category = input("Enter the category: ")
-
-    date = input("Enter the expense date (YYYY-MM-DD): ")
-
-    
-
-    print("Expense Added!")
-
-    choice = input("Do you want to add another expense? (yes/no): ")
-
-    if choice.lower() == "no":
+    if choice != "yes":
         break
 
 
@@ -119,7 +143,6 @@ while True:
 print("\n===== YOUR EXPENSES =====")
 
 for index, expense in enumerate(expenses, start=1):
-
     amount = expense[0]
     category = expense[1]
 
@@ -146,25 +169,33 @@ for category, total in category_totals.items():
 
 
 # Filter expenses by category
-category = input("\nEnter a category to filter: ")
+category = input("\nEnter a category to filter: ").strip()
 
 print(f"\n===== {category.upper()} EXPENSES =====")
 
 matching_expenses = filter_by_category(expenses, category)
 
-for expense in matching_expenses:
-    print(f"{expense[1]} - ₹{expense[0]:.2f}")
+if matching_expenses:
+    for expense in matching_expenses:
+        print(f"{expense[1]} - ₹{expense[0]:.2f}")
+else:
+    print("No expenses found for this category.")
 
 
 # Filter expenses by date
-date_filter = input("\nEnter a date to filter (YYYY-MM-DD): ")
+date_filter = input(
+    "\nEnter a date to filter (YYYY-MM-DD): "
+).strip()
 
 print(f"\n===== EXPENSES ON {date_filter} =====")
 
 matching_expenses = filter_by_date(expenses, date_filter)
 
-for expense in matching_expenses:
-    print(f"{expense[1]} - ₹{expense[0]:.2f}")
+if matching_expenses:
+    for expense in matching_expenses:
+        print(f"{expense[1]} - ₹{expense[0]:.2f}")
+else:
+    print("No expenses found for this date.")
 
 
 # Save expenses
