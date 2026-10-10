@@ -1,154 +1,14 @@
-import json
-import os
+
 import math
 
+from expense_functions import (
+    calculate_total,
+    calculate_category_totals,
+    filter_by_category,
+    filter_by_date,
+)
 
-# File paths
-FILE_PATH = "expense-tracker/expenses.json"
-TEMP_PATH = "expense-tracker/expenses.tmp"
-
-
-# Calculate total spending
-def calculate_total(expenses):
-    total = 0
-
-    for expense in expenses:
-        total += expense[0]
-
-    return total
-
-
-# Calculate spending by category
-def calculate_category_totals(expenses):
-    category_totals = {}
-
-    for expense in expenses:
-        category = expense[1]
-        amount = expense[0]
-
-        if category in category_totals:
-            category_totals[category] += amount
-        else:
-            category_totals[category] = amount
-
-    return category_totals
-
-
-# Filter expenses by category
-def filter_by_category(expenses, category):
-    matching_expenses = []
-
-    for expense in expenses:
-        if expense[1].strip().lower() == category.strip().lower():
-            matching_expenses.append(expense)
-
-    return matching_expenses
-
-
-# Filter expenses by date
-def filter_by_date(expenses, date):
-    matching_expenses = []
-
-    for expense in expenses:
-        if len(expense) >= 3 and expense[2].strip() == date.strip():
-            matching_expenses.append(expense)
-
-    return matching_expenses
-
-
-# Validate loaded expense records
-def validate_expenses(data):
-    if not isinstance(data, list):
-        raise ValueError("Expense data must be a list.")
-
-    for index, expense in enumerate(data, start=1):
-        if (
-            not isinstance(expense, list)
-            or len(expense) < 2
-            or len(expense) > 3
-        ):
-            raise ValueError(
-                f"Invalid expense record at entry {index}."
-            )
-
-        amount = expense[0]
-        category = expense[1]
-
-        if (
-            isinstance(amount, bool)
-            or not isinstance(amount, (int, float))
-            or not math.isfinite(amount)
-            or amount <= 0
- ):
-            raise ValueError(f"Invalid amount at expense entry {index}.")
-
-        if not isinstance(category, str) or not category.strip():
-            raise ValueError(
-                f"Invalid category at expense entry {index}."
-            )
-
-        if len(expense) == 3:
-            if not isinstance(expense[2], str) or not expense[2].strip():
-                raise ValueError(
-                    f"Invalid date at expense entry {index}."
-                )
-
-    return data
-
-
-# Save expenses safely
-def save_expenses(expenses):
-    try:
-        # Write to a temporary file first
-        with open(TEMP_PATH, "w", encoding="utf-8") as file:
-            json.dump(expenses, file, indent=4)
-            file.flush()
-            os.fsync(file.fileno())
-
-        # Replace the original only after writing succeeds
-        os.replace(TEMP_PATH, FILE_PATH)
-
-        print("\nExpenses saved successfully!")
-
-    except (OSError, TypeError, ValueError) as error:
-        print("\nERROR: Could not save expenses.")
-        print("Details:", error)
-
-        # Attempt to remove the temporary file
-        try:
-            if os.path.exists(TEMP_PATH):
-                os.remove(TEMP_PATH)
-        except OSError:
-            print("Warning: Could not remove the temporary file.")
-
-
-# Load existing expenses safely
-def load_expenses():
-    if not os.path.exists(FILE_PATH):
-        print("No existing expense file found. Starting with an empty list.")
-        return []
-
-    try:
-        with open(FILE_PATH, "r", encoding="utf-8") as file:
-            data = json.load(file)
-
-        return validate_expenses(data)
-
-    except json.JSONDecodeError:
-        print("\nERROR: The expense file contains invalid JSON.")
-        print("Your existing file has not been overwritten.")
-        raise
-
-    except ValueError as error:
-        print("\nERROR: The expense file contains invalid records.")
-        print("Details:", error)
-        print("Your existing file has not been overwritten.")
-        raise
-
-    except OSError as error:
-        print("\nERROR: Could not read the expense file.")
-        print("Details:", error)
-        raise
+from storage import load_expenses, save_expenses
 
 
 # Add an expense
@@ -184,7 +44,7 @@ def main():
     name = input("Enter your name: ").strip()
     print("Welcome,", name)
 
-    # Load existing data before allowing changes
+    # Load existing expenses
     try:
         expenses = load_expenses()
     except (OSError, ValueError):
