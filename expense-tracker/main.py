@@ -1,6 +1,8 @@
 
 import math
 
+from expense import Expense
+
 from expense_functions import (
     calculate_total,
     calculate_category_totals,
@@ -51,6 +53,12 @@ def main():
         print("\nProgram stopped to protect your existing expense data.")
         return
 
+    # Convert saved records into Expense objects
+    expense_objects = [
+        Expense.from_record(record)
+        for record in expenses
+    ]
+
     # Add expenses
     while True:
         add_expense(expenses)
@@ -62,18 +70,18 @@ def main():
         if choice != "yes":
             break
 
-    # Display all expenses
+    # Convert all records, including newly added expenses, into objects
+    expense_objects = [
+        Expense.from_record(record)
+        for record in expenses
+    ]
+
+    # Display all expenses using the Expense class
     print("\n===== YOUR EXPENSES =====")
 
-    for index, expense in enumerate(expenses, start=1):
-        amount = expense[0]
-        category = expense[1]
-
-        if len(expense) >= 3:
-            date = expense[2]
-            print(f"{index}. {category} - ₹{amount:.2f} - {date}")
-        else:
-            print(f"{index}. {category} - ₹{amount:.2f}")
+    for index, expense in enumerate(expense_objects, start=1):
+        print(f"{index}. ", end="")
+        expense.display()
 
     # Calculate total spending
     total = calculate_total(expenses)
@@ -95,8 +103,9 @@ def main():
     matching_expenses = filter_by_category(expenses, category)
 
     if matching_expenses:
-        for expense in matching_expenses:
-            print(f"{expense[1]} - ₹{expense[0]:.2f}")
+        for record in matching_expenses:
+            expense = Expense.from_record(record)
+            expense.display()
     else:
         print("No expenses found for this category.")
 
@@ -110,12 +119,26 @@ def main():
     matching_expenses = filter_by_date(expenses, date_filter)
 
     if matching_expenses:
-        for expense in matching_expenses:
-            print(f"{expense[1]} - ₹{expense[0]:.2f}")
+        for record in matching_expenses:
+            expense = Expense.from_record(record)
+            expense.display()
     else:
         print("No expenses found for this date.")
 
-    # Save expenses
+    # Show large expenses using the Expense class
+    print("\n===== LARGE EXPENSES (₹500 OR MORE) =====")
+
+    large_expenses_found = False
+
+    for expense in expense_objects:
+        if expense.is_large_expense():
+            expense.display()
+            large_expenses_found = True
+
+    if not large_expenses_found:
+        print("No large expenses found.")
+
+    # Save expenses without changing the JSON record format
     save_expenses(expenses)
 
 

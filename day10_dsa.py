@@ -47,3 +47,14 @@ while left < right:
         right -= 1
 
 print(found)
+
+numbers = [4, 2, 7, 2, 4, 9, 2]
+frequency = {}
+
+for number in numbers:
+    if number in frequency:
+        frequency[number] += 1
+    else:
+        frequency[number] = 1
+
+print(frequency)
