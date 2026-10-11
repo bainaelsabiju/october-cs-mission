@@ -1,29 +1,52 @@
-# October CS Mission 🚀
 
-A 90-day Computer Science and Software Engineering learning journey.
+# October CS Mission
 
-## October Project — Expense Tracker
+A 90-day computer science learning journey focused on
+Python, Data Structures and Algorithms, SQL, and software development.
 
-A Python command-line expense tracker built while learning Python, DSA, Git, and data storage.
+## Current Project: Expense Tracker
 
-## Features
-
-- Add expenses
-- Add expense categories
-- Validate expense amounts
-- Display all expenses
+A command-line application built with Python that allows users to:
+- Add expenses with amounts, categories, and dates
 - Calculate total spending
-- Save expenses using JSON
-- Load saved expenses when the program starts
+- View spending by category
+- Filter expenses by category and date
+- Store expenses persistently in JSON
+- Validate input and handle file errors
 
-## Technologies
+## Project Structure
 
-- Python
-- JSON
-- Git
-- GitHub
+- `expense-tracker/main.py` - Main program and user interaction
+- `expense-tracker/expense_functions.py` - Calculations and filters
+- `expense-tracker/storage.py` - JSON loading and saving
+- `expense-tracker/expenses.json` - Saved expense records
+- `day9_dsa.py` - DSA practice problems
+- `day10_dsa.py` - Two-pointer practice
+
+## Requirements
+
+- Python 3.14 or compatible Python 3 version
 
 ## How to Run
 
+From the project root, run:
+
 ```bash
 python expense-tracker/main.py
+```
+
+To run the Day 10 DSA practice:
+
+```bash
+python day10_dsa.py
+```
+
+## Topics Practiced
+
+- Python fundamentals and functions
+- Lists, dictionaries, and sets
+- File handling and JSON
+- Exception handling and input validation
+- Git and GitHub
+- Time and space complexity
+- Two pointers and sliding window

@@ -136,3 +136,6 @@ for i in range(k, len(numbers)):
         max_sum = window_sum
 
 print("Maximum sum:", max_sum)
+
+
+
