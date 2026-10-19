@@ -58,3 +58,22 @@ for number in numbers:
         frequency[number] = 1
 
 print(frequency)
+
+
+
+# ===== DAY 12: LINKED LIST PRACTICE =====
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+
+first = Node(10)
+second = Node(20)
+
+first.next = second
+
+print("\n===== LINKED LIST PRACTICE =====")
+print(first.data)
+print(first.next.data)
