@@ -6,6 +6,7 @@ from expense import Expense
 from expense_functions import (
     calculate_total,
     calculate_category_totals,
+    calculate_monthly_totals,
     filter_by_category,
     filter_by_date,
 )
@@ -86,6 +87,18 @@ def main():
     # Calculate total spending
     total = calculate_total(expenses)
     print(f"\nTotal spending: ₹{total:.2f}")
+    
+    # Calculate spending by month
+    monthly_totals = calculate_monthly_totals(expenses)
+
+    print("\n===== MONTHLY TOTALS =====")
+
+    if monthly_totals:
+        for month, amount in sorted(monthly_totals.items()):
+            print(f"{month}: ₹{amount:.2f}")
+    else:
+        print("No valid monthly expense records found.")
+
 
     # Calculate spending by category
     category_totals = calculate_category_totals(expenses)

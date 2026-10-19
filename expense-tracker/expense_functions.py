@@ -41,3 +41,22 @@ def filter_by_date(expenses, date):
             matching_expenses.append(expense)
 
     return matching_expenses
+
+def calculate_monthly_totals(expenses):
+    monthly_totals = {}
+
+    for record in expenses:
+        amount = float(record[0])
+        date = record[2] if len(record) >= 3 else ""
+
+        if len(date) < 7 or date[4] != "-":
+            continue
+
+        month = date[:7]
+
+        if month not in monthly_totals:
+            monthly_totals[month] = 0
+
+        monthly_totals[month] += amount
+
+    return monthly_totals
